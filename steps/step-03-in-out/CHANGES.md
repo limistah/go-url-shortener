@@ -1,7 +1,7 @@
 # step-03-in-out
 
-This step introduces the concept named by the folder and keeps the URL shortener narrative concrete.
+Introduces structured dependency params/results.
 
-- What changed: wiring updated for the step concept.
-- Why it matters: removes a specific manual-wiring pain point.
-- Verify: go run ./cmd/server and go test ./...
+- What changed: handler constructors use `fx.In` parameter structs.
+- Why it matters: constructor signatures stay readable as dependencies grow.
+- Verify: `go build ./...` and run server to confirm unchanged endpoint behavior.

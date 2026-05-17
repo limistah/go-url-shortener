@@ -1,7 +1,7 @@
 # step-02-lifecycle
 
-This step introduces the concept named by the folder and keeps the URL shortener narrative concrete.
+Introduces lifecycle-managed server startup and shutdown.
 
-- What changed: wiring updated for the step concept.
-- Why it matters: removes a specific manual-wiring pain point.
-- Verify: go run ./cmd/server and go test ./...
+- What changed: `server.NewServer` appends `OnStart` and `OnStop` hooks via `fx.Lifecycle`.
+- Why it matters: handles run/stop semantics cleanly without hand-written signal plumbing.
+- Verify: start with `go run ./cmd/server`, stop with Ctrl-C and observe graceful shutdown.

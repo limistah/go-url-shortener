@@ -1,7 +1,7 @@
 # step-05-value-groups
 
-This step introduces the concept named by the folder and keeps the URL shortener narrative concrete.
+Introduces grouped route registration.
 
-- What changed: wiring updated for the step concept.
-- Why it matters: removes a specific manual-wiring pain point.
-- Verify: go run ./cmd/server and go test ./...
+- What changed: handlers are provided into `group:"routes"`; mux consumes the grouped slice.
+- Why it matters: adding a route no longer requires editing central registration code.
+- Verify: both `POST /shorten` and `GET /{slug}` are registered and functional.

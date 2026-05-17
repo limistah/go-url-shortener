@@ -1,7 +1,7 @@
 # step-09-testing
 
-This step introduces the concept named by the folder and keeps the URL shortener narrative concrete.
+Introduces Fx-native test composition.
 
-- What changed: wiring updated for the step concept.
-- Why it matters: removes a specific manual-wiring pain point.
-- Verify: go run ./cmd/server and go test ./...
+- What changed: tests use `fxtest.New`, `fx.Populate`, and `fx.Replace` for handler-level verification.
+- Why it matters: real dependency graph tests with lightweight unit-test ergonomics.
+- Verify: run `go test ./...` and confirm handler tests pass.

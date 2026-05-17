@@ -1,7 +1,7 @@
 # step-04-annotate-as
 
-This step introduces the concept named by the folder and keeps the URL shortener narrative concrete.
+Introduces interface-based wiring via annotations.
 
-- What changed: wiring updated for the step concept.
-- Why it matters: removes a specific manual-wiring pain point.
-- Verify: go run ./cmd/server and go test ./...
+- What changed: store providers are wrapped with `fx.Annotate(..., fx.As(new(storage.Store)))`.
+- Why it matters: handlers depend on `storage.Store` interface, not concrete implementations.
+- Verify: `go run ./cmd/server` still serves both endpoints with in-memory store.

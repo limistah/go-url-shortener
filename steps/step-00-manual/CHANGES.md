@@ -1,7 +1,7 @@
 # step-00-manual
 
-This step introduces the concept named by the folder and keeps the URL shortener narrative concrete.
+Baseline only: plain Go manual wiring in `main.go` style.
 
-- What changed: wiring updated for the step concept.
-- Why it matters: removes a specific manual-wiring pain point.
-- Verify: go run ./cmd/server and go test ./...
+- What changed: no Fx container; constructors are called directly in order.
+- Why it matters: establishes the pain point (ordering, signature ripple, centralized wiring).
+- Verify: `go run ./cmd/server` and exercise `POST /shorten`, `GET /{slug}`.

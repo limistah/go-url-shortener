@@ -1,7 +1,7 @@
 # step-08-decorate
 
-This step introduces the concept named by the folder and keeps the URL shortener narrative concrete.
+Introduces scoped decoration for cross-cutting behavior.
 
-- What changed: wiring updated for the step concept.
-- Why it matters: removes a specific manual-wiring pain point.
-- Verify: go run ./cmd/server and go test ./...
+- What changed: `api.Module` decorates `*zap.Logger` to include `module=api`.
+- Why it matters: module-local behavior is injected without touching each constructor.
+- Verify: API logs include the module field while non-API logs remain undecorated.

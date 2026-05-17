@@ -1,7 +1,7 @@
 # step-06-named-values
 
-This step introduces the concept named by the folder and keeps the URL shortener narrative concrete.
+Introduces named dependencies for multiple stores.
 
-- What changed: wiring updated for the step concept.
-- Why it matters: removes a specific manual-wiring pain point.
-- Verify: go run ./cmd/server and go test ./...
+- What changed: hot and cold `storage.Store` providers are tagged with `name:"hot"` and `name:"cold"`.
+- Why it matters: same interface type can be injected unambiguously into one consumer.
+- Verify: `go run ./cmd/server` and confirm shorten/lookup flow uses dual-store wiring.

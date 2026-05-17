@@ -1,7 +1,7 @@
 # step-01-provide-invoke
 
-This step introduces the concept named by the folder and keeps the URL shortener narrative concrete.
+Introduces container registration and graph construction.
 
-- What changed: wiring updated for the step concept.
-- Why it matters: removes a specific manual-wiring pain point.
-- Verify: go run ./cmd/server and go test ./...
+- What changed: constructor functions are registered with `fx.Provide`; side-effect entrypoint uses `fx.Invoke`.
+- Why it matters: removes fragile manual constructor ordering.
+- Verify: dependency graph builds with `go run ./cmd/server`.
