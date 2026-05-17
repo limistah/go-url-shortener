@@ -48,8 +48,12 @@ type FileStore struct {
 }
 
 func NewFileStore(cfg config.Config) (*FileStore, error) {
-	fs := &FileStore{path: cfg.DatabaseURL, data: make(map[string]string)}
-	blob, err := os.ReadFile(cfg.DatabaseURL)
+	path := cfg.DatabaseURL
+	if path == "" {
+		path = "./shortener.db.json"
+	}
+	fs := &FileStore{path: path, data: make(map[string]string)}
+	blob, err := os.ReadFile(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return fs, nil

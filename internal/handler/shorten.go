@@ -66,11 +66,25 @@ func (h *ShortenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	baseURL := "http://localhost" + h.cfg.Addr
+	host := r.Host
+	if host == "" {
+		host = fallbackHostFromAddr(h.cfg.Addr)
+	}
+	baseURL := "http://" + host
 	res := shortenResponse{Slug: slug, ShortURL: baseURL + "/" + slug}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		h.logger.Error("failed to encode response", zap.Error(err))
 	}
+}
+
+func fallbackHostFromAddr(addr string) string {
+	if strings.HasPrefix(addr, ":") {
+		return "localhost" + addr
+	}
+	if strings.Contains(addr, ":") {
+		return addr
+	}
+	return "localhost:" + addr
 }
