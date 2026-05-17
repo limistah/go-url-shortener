@@ -8,18 +8,27 @@ import (
 	"go.uber.org/fx"
 )
 
-type message struct{ text string }
+type out struct {
+	fx.Out
+	Route string `group:"routes"`
+}
 
-func newMessage() message { return message{text: "checkpoint running"} }
+func routeA() out { return out{Route: "POST /shorten"} }
+func routeB() out { return out{Route: "GET /{slug}"} }
 
-func run(m message) { fmt.Println(m.text) }
+func printRoutes(in struct {
+	fx.In
+	Routes []string `group:"routes"`
+}) {
+	fmt.Printf("06: %v\n", in.Routes)
+}
 
 func main() {
 	app := fx.New(
-		fx.Provide(newMessage),
-		fx.Invoke(run),
+		fx.Provide(routeA, routeB),
+		fx.Invoke(printRoutes),
 	)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	_ = app.Start(ctx)
 	_ = app.Stop(ctx)

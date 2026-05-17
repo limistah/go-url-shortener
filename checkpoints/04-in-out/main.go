@@ -8,18 +8,36 @@ import (
 	"go.uber.org/fx"
 )
 
-type message struct{ text string }
+type in struct {
+	fx.In
+	Prefix string `name:"prefix"`
+	Value  string `name:"value"`
+}
 
-func newMessage() message { return message{text: "checkpoint running"} }
+type out struct {
+	fx.Out
+	Combined string
+}
 
-func run(m message) { fmt.Println(m.text) }
+func providePrefix() string { return "04:" }
+func provideValue() string  { return " fx.In/fx.Out" }
+
+func combine(v in) out {
+	return out{Combined: v.Prefix + v.Value}
+}
+
+func printCombined(v string) { fmt.Println(v) }
 
 func main() {
 	app := fx.New(
-		fx.Provide(newMessage),
-		fx.Invoke(run),
+		fx.Provide(
+			fx.Annotate(providePrefix, fx.ResultTags(`name:"prefix"`)),
+			fx.Annotate(provideValue, fx.ResultTags(`name:"value"`)),
+			combine,
+		),
+		fx.Invoke(printCombined),
 	)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	_ = app.Start(ctx)
 	_ = app.Stop(ctx)

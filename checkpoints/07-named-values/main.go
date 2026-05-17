@@ -8,18 +8,26 @@ import (
 	"go.uber.org/fx"
 )
 
-type message struct{ text string }
+func providePrimary() string   { return "primary-store" }
+func provideSecondary() string { return "secondary-store" }
 
-func newMessage() message { return message{text: "checkpoint running"} }
-
-func run(m message) { fmt.Println(m.text) }
+func useNamed(in struct {
+	fx.In
+	Primary   string `name:"primary"`
+	Secondary string `name:"secondary"`
+}) {
+	fmt.Printf("07: %s + %s\n", in.Primary, in.Secondary)
+}
 
 func main() {
 	app := fx.New(
-		fx.Provide(newMessage),
-		fx.Invoke(run),
+		fx.Provide(
+			fx.Annotate(providePrimary, fx.ResultTags(`name:"primary"`)),
+			fx.Annotate(provideSecondary, fx.ResultTags(`name:"secondary"`)),
+		),
+		fx.Invoke(useNamed),
 	)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	_ = app.Start(ctx)
 	_ = app.Stop(ctx)
