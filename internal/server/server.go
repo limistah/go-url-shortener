@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"errors"
+	"log"
 	"net/http"
 	"time"
 
@@ -33,7 +35,9 @@ func RegisterLifecycle(p LifecycleParams) {
 	p.Lifecycle.Append(fx.Hook{
 		OnStart: func(context.Context) error {
 			go func() {
-				_ = p.Server.ListenAndServe()
+				if err := p.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+					log.Printf("http server failed: %v", err)
+				}
 			}()
 			return nil
 		},

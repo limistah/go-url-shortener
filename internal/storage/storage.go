@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
 	"sync"
@@ -78,7 +79,9 @@ func (m *mirrorStore) Save(ctx context.Context, longURL string) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	_, _ = m.secondary.Save(ctx, longURL)
+	if _, err := m.secondary.Save(ctx, longURL); err != nil {
+		log.Printf("secondary store save failed for %q: %v", longURL, err)
+	}
 	return slug, nil
 }
 

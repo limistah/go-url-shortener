@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -49,7 +50,9 @@ func (h *URLHandler) HandleShorten(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(shortenResponse{Slug: slug, ShortURL: h.baseURL + "/" + slug})
+	if err := json.NewEncoder(w).Encode(shortenResponse{Slug: slug, ShortURL: h.baseURL + "/" + slug}); err != nil {
+		log.Printf("encode shorten response failed: %v", err)
+	}
 }
 
 func (h *URLHandler) HandleRedirect(w http.ResponseWriter, r *http.Request) {
