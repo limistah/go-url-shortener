@@ -99,7 +99,6 @@ type ShortenParams struct {
 	fx.In
 
 	Store  Store
-	Logger *zap.Logger
 	Config Config
 }
 
