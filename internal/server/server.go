@@ -3,52 +3,37 @@ package server
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
-	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/limistah/go-url-shortener/internal/config"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
-func NewMux() *mux.Router {
-	return mux.NewRouter()
-}
+func NewServer(lc fx.Lifecycle, mux *http.ServeMux, cfg config.Config, log *zap.Logger) *http.Server {
+	srv := &http.Server{Addr: cfg.Addr, Handler: mux}
 
-func NewHTTPServer(cfg config.Config, mux *mux.Router) *http.Server {
-	return &http.Server{
-		Addr:              cfg.Addr,
-		Handler:           mux,
-		ReadHeaderTimeout: 5 * time.Second,
-	}
-}
-
-type LifecycleParams struct {
-	fx.In
-
-	Lifecycle fx.Lifecycle
-	Server    *http.Server
-}
-
-func RegisterLifecycle(p LifecycleParams) {
-	p.Lifecycle.Append(fx.Hook{
+	lc.Append(fx.Hook{
 		OnStart: func(context.Context) error {
+			log.Info("starting server", zap.String("addr", cfg.Addr))
 			go func() {
-				if err := p.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-					log.Printf("http server failed: %v", err)
+				if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+					log.Error("server stopped with error", zap.Error(err))
 				}
 			}()
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			return p.Server.Shutdown(ctx)
+			log.Info("stopping server")
+			return srv.Shutdown(ctx)
 		},
 	})
+
+	return srv
 }
 
 var Module = fx.Module(
 	"server",
-	fx.Provide(NewMux, NewHTTPServer),
-	fx.Invoke(RegisterLifecycle),
+	fx.Provide(zap.NewProduction, NewServer),
+	fx.Invoke(func(*http.Server) {}),
 )

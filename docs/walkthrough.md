@@ -1,173 +1,146 @@
-# Visual Walkthrough: Minimal Fx URL Shortener
+# Visual Walkthrough: URL Shortener Fx Steps
 
-This project is intentionally small and organized around teaching dependency injection with Uber Fx.
-
-## Dependency flow (final app)
+## Final dependency graph
 
 ```mermaid
 flowchart LR
-  C[config.New] --> S[storage.NewActiveStore]
-  S --> H[handlers.NewURLHandler]
-  H --> R[routes.NewRoutes]
-  R --> M[server.NewMux]
-  M --> SV[server.NewHTTPServer]
-  SV --> L[server.RegisterLifecycle]
+  C[config.Load] --> HS[hot Store]
+  C --> CS[cold Store]
+  HS --> DS[storage.NewDualStore]
+  CS --> DS
+  DS --> SH[handler.NewShortenHandler]
+  DS --> RH[handler.NewRedirectHandler]
+  SH --> M[api.NewMux]
+  RH --> M
+  M --> S[server.NewServer]
 ```
 
-## Step checkpoints
+## Step map (branch narrative mirrored as folders)
 
-Each folder below compiles and runs independently:
+- `step-00-manual` → baseline manual wiring
+- `step-01-provide-invoke` → `fx.Provide`, `fx.Invoke`
+- `step-02-lifecycle` → `fx.Lifecycle`
+- `step-03-in-out` → `fx.In`, `fx.Out`
+- `step-04-annotate-as` → `fx.Annotate`, `fx.As`
+- `step-05-value-groups` → `group:"routes"`
+- `step-06-named-values` → `name:"hot"`, `name:"cold"`
+- `step-07-module` → `fx.Module`
+- `step-08-decorate` → `fx.Decorate`
+- `step-09-testing` → `fxtest`, `fx.Populate`, `fx.Replace`
 
-- `checkpoints/01-manual-wiring`
-- `checkpoints/02-provide-invoke`
-- `checkpoints/03-lifecycle`
-- `checkpoints/04-in-out`
-- `checkpoints/05-annotate-as`
-- `checkpoints/06-value-groups`
-- `checkpoints/07-named-values`
-- `checkpoints/08-module`
-- `checkpoints/09-decorate`
+## Per-step container evolution
 
-Run any step:
-
-```bash
-go run ./checkpoints/02-provide-invoke
-```
-
-## Wiring evolution
-
-### 01 → manual baseline
-Before: constructors and route wiring done directly in `main.go`.
-After: still manual, but now ready for extraction.
-
+### 00 Manual
 ```mermaid
 flowchart LR
-  Main --> Router
+  Main --> Config
+  Main --> Store
+  Main --> Handlers
+  Main --> Mux
   Main --> Server
 ```
 
-### 02 → `fx.Provide`/`fx.Invoke`
-Before: manual object passing.
-After: container constructs dependencies and invokes entry points.
-
+### 01 Provide/Invoke
 ```mermaid
 flowchart LR
   Provide --> Container --> Invoke
 ```
 
-### 03 → `fx.Lifecycle`
-Before: server start/stop was unmanaged.
-After: startup and graceful shutdown are lifecycle hooks.
-
+### 02 Lifecycle
 ```mermaid
 flowchart LR
-  Lifecycle --> OnStart
-  Lifecycle --> OnStop
+  Container --> OnStart
+  Container --> OnStop
 ```
 
-### 04 → `fx.In`/`fx.Out`
-Before: long constructor argument lists.
-After: explicit dependency bundles and structured outputs.
-
+### 03 In/Out
 ```mermaid
 flowchart LR
-  In --> Constructor --> Out
+  InStruct --> Constructor --> OutStruct
 ```
 
-### 05 → `fx.Annotate`/`fx.As`
-Before: concrete types tied to providers.
-After: providers exported as interfaces for cleaner boundaries.
-
+### 04 Annotate/As
 ```mermaid
 flowchart LR
-  Concrete --> Annotate --> Interface
+  MemoryStore --> Annotate --> StoreInterface
 ```
 
-### 06 → value groups (`group:"routes"`)
-Before: routes registered one by one.
-After: route providers contribute into one grouped collection.
-
+### 05 Value groups
 ```mermaid
 flowchart LR
-  RouteA --> Group
-  RouteB --> Group
-  Group --> RegisterAll
+  ShortenRoute --> routesGroup
+  RedirectRoute --> routesGroup
+  routesGroup --> NewMux
 ```
 
-### 07 → named values
-Before: single store instance.
-After: `primary` and `secondary` stores demonstrate named dependency wiring.
-
+### 06 Named values
 ```mermaid
 flowchart LR
-  Primary --> ActiveStore
-  Secondary --> ActiveStore
+  HotStore --> DualStore
+  ColdStore --> DualStore
 ```
 
-### 08 → `fx.Module`
-Before: global option list.
-After: features grouped into `config`, `storage`, `handlers`, `routes`, `server`, `app`.
-
+### 07 Module
 ```mermaid
 flowchart LR
-  ConfigM --> AppM
-  StorageM --> AppM
-  ApiM --> AppM
-  ServerM --> AppM
+  ConfigModule --> App
+  StorageModule --> App
+  APIModule --> App
+  ServerModule --> App
 ```
 
-### 09 → `fx.Decorate`
-Before: store returned directly.
-After: store decorated with URL validation behavior without changing constructors.
-
+### 08 Decorate
 ```mermaid
 flowchart LR
-  Store --> Decorate --> ValidatingStore
+  Logger --> Decorate(module=api) --> APIConsumers
 ```
 
-## Verify the final app
-
-```bash
-go run ./cmd/shortener
+### 09 Testing
+```mermaid
+flowchart LR
+  fxtest --> Populate
+  fxtest --> Replace
 ```
 
-```bash
-curl -s -X POST http://localhost:8080/shorten \
-  -H 'Content-Type: application/json' \
-  -d '{"url":"https://go.dev"}'
-```
+## What changed in wiring and why it matters
 
-Then open returned `short_url` or run:
+- `Provide/Invoke`: removes constructor-order coupling in `main.go`.
+- `Lifecycle`: owns startup/shutdown without hand-written signal handling.
+- `In/Out`: keeps constructor signatures readable as dependencies grow.
+- `Annotate/As`: handlers depend on `Store` interface instead of concrete type.
+- `Value groups`: route registration no longer requires central switchboard edits.
+- `Named values`: disambiguates multiple `Store` instances.
+- `Module`: teams compose features without one mega wiring file.
+- `Decorate`: applies cross-cutting behavior in a scoped way.
+- `Testing`: graph-level tests with unit-like ergonomics.
 
-```bash
-curl -i http://localhost:8080/u1
-```
+## Troubleshooting common Fx errors
 
-## Common Fx errors (quick guide)
-
-- **missing type in container**: ensure provider is included in a module.
-- **duplicate providers**: keep one constructor per same unnamed type unless using names.
-- **failed invoke**: check constructor errors and input tags (`name`, `group`).
-- **lifecycle hangs**: confirm `OnStop` shuts down long-running goroutines/servers.
+- **missing type**: ensure provider is inside composed modules.
+- **cannot supply same type**: use names or groups where duplicates are expected.
+- **group/tag mismatch**: verify `fx.ResultTags`/`fx.ParamTags` strings.
+- **server never starts**: ensure `*http.Server` is invoked/instantiated.
 
 ## Which pattern to use when
 
-- `fx.Provide` + `fx.Invoke`: basic composition and startup entry points.
-- `fx.In`/`fx.Out`: constructor signatures become explicit and scalable.
-- `fx.Annotate`/`fx.As`: expose interfaces cleanly.
-- `name:"..."`: multiple instances of the same type.
-- `group:"..."`: plugin-like collections (routes, hooks, jobs).
-- `fx.Module`: feature-level organization.
-- `fx.Decorate`: wrap behavior cross-cuttingly without touching original constructors.
+- `fx.Provide` + `fx.Invoke`: basic graph assembly + side effects.
+- `fx.Lifecycle`: startup/shutdown hooks.
+- `fx.In`/`fx.Out`: many deps or many results.
+- `fx.Annotate`/`fx.As`: map concrete providers to interface consumers.
+- `group:"..."`: plugin collections.
+- `name:"..."`: multiple instances of same interface/type.
+- `fx.Module`: feature ownership boundaries.
+- `fx.Decorate`: scoped cross-cutting behavior.
 
-## Slide-to-code index
+## Slide-to-file index
 
-- Slide 1 (manual baseline): `checkpoints/01-manual-wiring/main.go`
-- Slide 2 (`Provide`/`Invoke`): `checkpoints/02-provide-invoke/main.go`
-- Slide 3 (`Lifecycle`): `internal/server/server.go`
-- Slide 4 (`In`/`Out`): `internal/api/handlers/handlers.go`, `internal/api/routes/routes.go`
-- Slide 5 (`Annotate`/`As`): `internal/storage/storage.go`
-- Slide 6 (value groups): `internal/api/routes/routes.go`
-- Slide 7 (named values): `internal/storage/storage.go`
-- Slide 8 (`Module`): `internal/app/app.go`
-- Slide 9 (`Decorate`): `internal/storage/storage.go`, `internal/app/app.go`
+- Slide 00: `steps/step-00-manual/CHANGES.md`
+- Slide 01: `cmd/server/main.go`
+- Slide 02: `internal/server/server.go`
+- Slide 03: `internal/handler/shorten.go`, `internal/handler/redirect.go`
+- Slide 04: `internal/storage/store.go` (`fx.As`)
+- Slide 05: `internal/api/module.go` (groups)
+- Slide 06: `internal/storage/store.go` (named hot/cold)
+- Slide 07: `internal/*/Module` declarations
+- Slide 08: `internal/api/module.go` (`fx.Decorate`)
+- Slide 09: `internal/handler/shorten_test.go`

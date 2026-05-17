@@ -7,27 +7,22 @@ import (
 )
 
 type Config struct {
-	Addr         string
-	BaseURL      string
-	UseSecondary bool
+	Addr        string
+	DatabaseURL string
 }
 
-func New() Config {
+func Load() Config {
 	cfg := Config{
-		Addr:         ":8080",
-		BaseURL:      "http://localhost:8080",
-		UseSecondary: false,
+		Addr:        ":8080",
+		DatabaseURL: "./shortener.db.json",
 	}
 	if v := os.Getenv("ADDR"); v != "" {
 		cfg.Addr = v
 	}
-	if v := os.Getenv("BASE_URL"); v != "" {
-		cfg.BaseURL = v
-	}
-	if os.Getenv("USE_SECONDARY_STORE") == "1" {
-		cfg.UseSecondary = true
+	if v := os.Getenv("DATABASE_URL"); v != "" {
+		cfg.DatabaseURL = v
 	}
 	return cfg
 }
 
-var Module = fx.Module("config", fx.Provide(New))
+var Module = fx.Module("config", fx.Provide(Load))

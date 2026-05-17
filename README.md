@@ -1,23 +1,16 @@
-# go-url-shortener
+# URL Shortener — Uber Fx Build Spec (Concrete Demo)
 
-Minimal URL shortener for teaching Uber Fx dependency injection with a visual walkthrough.
+This repository now contains a concrete minimal URL shortener aligned to the talk narrative.
 
-## Start here
+## App endpoints
 
-- Walkthrough: [`/docs/walkthrough.md`](/docs/walkthrough.md)
-- Final runnable app: [`/cmd/shortener/main.go`](/cmd/shortener/main.go)
-- Progressive checkpoints: [`/checkpoints`](/checkpoints)
+- `POST /shorten`
+- `GET /{slug}`
 
-## One-command run
-
-```bash
-go run ./cmd/shortener
-```
-
-Optional named-secondary storage demo:
+## Entry point
 
 ```bash
-USE_SECONDARY_STORE=1 go run ./cmd/shortener
+go run ./cmd/server
 ```
 
 ## One-command test
@@ -26,34 +19,48 @@ USE_SECONDARY_STORE=1 go run ./cmd/shortener
 go test ./...
 ```
 
-## API
-
-### Create short URL
+## Quick verify
 
 ```bash
-curl -s -X POST http://localhost:8080/shorten \
+curl -s -X POST localhost:8080/shorten \
   -H 'Content-Type: application/json' \
-  -d '{"url":"https://go.dev"}'
+  -d '{"url":"https://example.com"}'
 ```
 
-Response example:
-
-```json
-{"slug":"u1","short_url":"http://localhost:8080/u1"}
-```
-
-### Resolve slug
+Use the returned slug:
 
 ```bash
-curl -i http://localhost:8080/u1
+curl -i -L localhost:8080/<slug>
 ```
 
-Expected: `307 Temporary Redirect` to original URL.
+## Structure used in the talk
 
-## Learning map
+- `cmd/server/main.go`
+- `internal/config/config.go`
+- `internal/storage/store.go`
+- `internal/handler/shorten.go`
+- `internal/handler/redirect.go`
+- `internal/handler/route.go`
+- `internal/api/module.go`
+- `internal/server/server.go`
 
-See `/docs/walkthrough.md` for:
-- before/after wiring narrative
-- step-by-step visuals (mermaid graphs)
-- troubleshooting common Fx errors
-- cheat sheet and slide-to-code index
+## Progressive steps
+
+Because this environment works on one active branch, branch checkpoints are mirrored as folders:
+
+- `steps/step-00-manual`
+- `steps/step-01-provide-invoke`
+- `steps/step-02-lifecycle`
+- `steps/step-03-in-out`
+- `steps/step-04-annotate-as`
+- `steps/step-05-value-groups`
+- `steps/step-06-named-values`
+- `steps/step-07-module`
+- `steps/step-08-decorate`
+- `steps/step-09-testing`
+
+Each step folder includes `CHANGES.md` narrative.
+
+## Walkthrough
+
+See [`docs/walkthrough.md`](docs/walkthrough.md) for the visual dependency-flow explanation, step mapping, troubleshooting, and pattern cheat sheet.
